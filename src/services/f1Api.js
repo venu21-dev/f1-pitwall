@@ -1,44 +1,86 @@
 /**
  * Jolpica F1 API – Service Layer
  * Base URL: https://api.jolpi.ca/ergast/f1
- * Docs: https://github.com/jolpica/jolpica-f1
+ * Docs:     https://github.com/jolpica/jolpica-f1
+ *
+ * Alle Funktionen geben bereits normalisierte Daten zurück
+ * (kein MRData-Wrapper in den Stores nötig).
  */
 
 const BASE_URL = 'https://api.jolpi.ca/ergast/f1'
 
+/**
+ * Interner Fetch-Helfer mit einheitlichem Error Handling.
+ * @param {string} path - Pfad ohne BASE_URL, ohne .json
+ * @returns {Promise<object>} Rohes MRData-Objekt
+ */
 async function fetchJson(path) {
-  const response = await fetch(`${BASE_URL}${path}.json`)
+  const url = `${BASE_URL}${path}.json`
+  let response
+  try {
+    response = await fetch(url)
+  } catch {
+    throw new Error(`Netzwerkfehler – ist eine Internetverbindung vorhanden? (${url})`)
+  }
   if (!response.ok) {
-    throw new Error(`API Error ${response.status}: ${response.statusText}`)
+    throw new Error(`API ${response.status} ${response.statusText} – ${url}`)
   }
   return response.json()
 }
 
-// Placeholder exports – implementations follow in later steps
-
 export const f1Api = {
   /**
-   * Get driver standings for a given season year.
+   * Fahrerwertung einer Saison.
    * @param {number|string} year
+   * @returns {Promise<DriverStanding[]>}
    */
-  getDriverStandings(year) {
-    return fetchJson(`/${year}/driverstandings`)
+  async getDriverStandings(year) {
+    const data = await fetchJson(`/${year}/driverstandings`)
+    const lists = data.MRData.StandingsTable.StandingsLists
+    return lists.length ? lists[0].DriverStandings : []
   },
 
   /**
-   * Get all races for a given season year.
+   * Alle Rennen (Kalender) einer Saison.
    * @param {number|string} year
+   * @returns {Promise<Race[]>}
    */
-  getRaces(year) {
-    return fetchJson(`/${year}/races`)
+  async getRaces(year) {
+    const data = await fetchJson(`/${year}/races`)
+    return data.MRData.RaceTable.Races
   },
 
   /**
-   * Get race results for a driver in a given year.
+   * Basisinfo zu einem Fahrer (unabhängig von Saison).
+   * @param {string} driverId  z.B. "hamilton", "verstappen"
+   * @returns {Promise<Driver|null>}
+   */
+  async getDriverInfo(driverId) {
+    const data = await fetchJson(`/drivers/${driverId}`)
+    const drivers = data.MRData.DriverTable.Drivers
+    return drivers.length ? drivers[0] : null
+  },
+
+  /**
+   * Alle Rennergebnisse eines Fahrers in einer Saison.
    * @param {number|string} year
    * @param {string} driverId
+   * @returns {Promise<Race[]>}  Jedes Race-Objekt enthält Results[0] für diesen Fahrer
    */
-  getDriverResults(year, driverId) {
-    return fetchJson(`/${year}/drivers/${driverId}/results`)
+  async getDriverSeasonResults(year, driverId) {
+    const data = await fetchJson(`/${year}/drivers/${driverId}/results`)
+    return data.MRData.RaceTable.Races
+  },
+
+  /**
+   * Alle Ergebnisse eines einzelnen Rennens.
+   * @param {number|string} year
+   * @param {number|string} round
+   * @returns {Promise<Race|null>}
+   */
+  async getRaceResults(year, round) {
+    const data = await fetchJson(`/${year}/${round}/results`)
+    const races = data.MRData.RaceTable.Races
+    return races.length ? races[0] : null
   },
 }

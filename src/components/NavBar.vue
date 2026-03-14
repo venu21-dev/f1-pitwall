@@ -6,7 +6,7 @@ const route = useRoute()
 const menuOpen = ref(false)
 
 const navLinks = [
-  { name: 'Übersicht', to: '/' },
+  { name: 'Home', to: '/' },
   { name: 'Fahrer', to: '/drivers' },
   { name: 'Saison', to: '/seasons/2024' },
   { name: 'Vergleich', to: '/compare' },
@@ -24,12 +24,14 @@ function isActive(path) {
 
 <template>
   <header class="navbar">
-    <div class="navbar__inner container">
+    <div class="navbar__pill">
+
       <!-- Logo -->
       <RouterLink to="/" class="navbar__logo" @click="closeMenu">
-        <span class="navbar__logo-f1">F1</span>
-        <span class="navbar__logo-text">PitWall</span>
+        <span class="navbar__logo-mark">F1</span>
       </RouterLink>
+
+      <span class="navbar__sep" aria-hidden="true"></span>
 
       <!-- Desktop Links -->
       <nav class="navbar__links" aria-label="Hauptnavigation">
@@ -58,98 +60,108 @@ function isActive(path) {
     </div>
 
     <!-- Mobile Dropdown -->
-    <nav
-      class="navbar__mobile"
-      :class="{ 'navbar__mobile--open': menuOpen }"
-      aria-label="Mobile Navigation"
-    >
-      <RouterLink
-        v-for="link in navLinks"
-        :key="link.to"
-        :to="link.to"
-        class="navbar__mobile-link"
-        :class="{ 'navbar__mobile-link--active': isActive(link.to) }"
-        @click="closeMenu"
+    <div class="navbar__mobile-wrap">
+      <nav
+        class="navbar__mobile"
+        :class="{ 'navbar__mobile--open': menuOpen }"
+        aria-label="Mobile Navigation"
       >
-        {{ link.name }}
-      </RouterLink>
-    </nav>
+        <RouterLink
+          v-for="link in navLinks"
+          :key="link.to"
+          :to="link.to"
+          class="navbar__mobile-link"
+          :class="{ 'navbar__mobile-link--active': isActive(link.to) }"
+          @click="closeMenu"
+        >
+          {{ link.name }}
+        </RouterLink>
+      </nav>
+    </div>
   </header>
 </template>
 
 <style scoped>
+/* ── Outer header (just positions the pill) ─────────── */
 .navbar {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 100;
-  height: var(--nav-height);
-  background: rgba(13, 13, 13, 0.92);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--color-border);
+  padding: 14px 1.5rem;
 }
 
-.navbar__inner {
+/* ── Pill container ──────────────────────────────────── */
+.navbar__pill {
+  width: fit-content;
+  margin: 0 auto;
+  height: 56px;
   display: flex;
   align-items: center;
-  height: var(--nav-height);
-  gap: 2rem;
+  gap: 0.5rem;
+  padding: 0 0.75rem 0 1rem;
+  background: rgba(18, 18, 28, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 999px;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
 }
 
-/* Logo */
+/* ── Logo ────────────────────────────────────────────── */
 .navbar__logo {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  font-weight: 700;
-  font-size: 1.1rem;
-  letter-spacing: -0.01em;
   flex-shrink: 0;
+  text-decoration: none;
 }
 
-.navbar__logo-f1 {
-  background: var(--color-primary);
-  color: #fff;
-  padding: 0.1rem 0.45rem;
-  border-radius: 4px;
-  font-size: 0.85rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
+.navbar__logo-mark {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 900;
+  font-size: 1.5rem;
+  color: var(--color-primary);
+  letter-spacing: -0.02em;
+  line-height: 1;
+  user-select: none;
 }
 
-.navbar__logo-text {
-  color: var(--color-text);
-}
-
-/* Desktop nav */
+/* ── Desktop nav links ───────────────────────────────── */
 .navbar__links {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
-  margin-left: auto;
+  gap: 0.15rem;
 }
 
 .navbar__link {
-  padding: 0.4rem 0.85rem;
-  border-radius: var(--radius);
-  font-size: 0.9rem;
+  padding: 0.4rem 1rem;
+  border-radius: 999px;
+  font-size: 0.95rem;
   font-weight: 500;
   color: var(--color-text-muted);
-  transition: color var(--transition), background var(--transition);
+  transition: color var(--transition);
 }
 
 .navbar__link:hover {
   color: var(--color-text);
-  background: var(--color-surface);
 }
 
 .navbar__link--active {
-  color: var(--color-primary);
-  background: rgba(225, 6, 0, 0.1);
+  color: #ffffff;
+  font-weight: 700;
 }
 
-/* Burger */
+/* ── Logo/links separator ────────────────────────────── */
+.navbar__sep {
+  width: 1px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.12);
+  flex-shrink: 0;
+  margin: 0 0.5rem;
+}
+
+/* ── Mobile burger button ────────────────────────────── */
 .navbar__burger {
   display: none;
   flex-direction: column;
@@ -161,6 +173,7 @@ function isActive(path) {
   margin-left: auto;
   width: 36px;
   height: 36px;
+  cursor: pointer;
 }
 
 .navbar__burger span {
@@ -181,14 +194,22 @@ function isActive(path) {
   transform: translateY(-7px) rotate(-45deg);
 }
 
-/* Mobile dropdown */
+/* ── Mobile dropdown ─────────────────────────────────── */
+.navbar__mobile-wrap {
+  width: fit-content;
+  min-width: 240px;
+  margin: 0 auto;
+}
+
 .navbar__mobile {
   display: none;
   flex-direction: column;
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
+  background: rgba(18, 18, 28, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 14px;
   overflow: hidden;
   max-height: 0;
+  margin-top: 6px;
   transition: max-height 250ms ease;
 }
 
@@ -201,7 +222,7 @@ function isActive(path) {
   font-size: 0.95rem;
   font-weight: 500;
   color: var(--color-text-muted);
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   transition: color var(--transition), background var(--transition);
 }
 
@@ -209,19 +230,18 @@ function isActive(path) {
   border-bottom: none;
 }
 
-.navbar__mobile-link:hover,
-.navbar__mobile-link--active {
-  color: var(--color-primary);
-  background: rgba(225, 6, 0, 0.06);
+.navbar__mobile-link:hover {
+  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.04);
 }
 
-/* Responsive */
-@media (max-width: 640px) {
-  .navbar {
-    height: auto;
-    min-height: var(--nav-height);
-  }
+.navbar__mobile-link--active {
+  color: #ffffff;
+  font-weight: 700;
+}
 
+/* ── Responsive ──────────────────────────────────────── */
+@media (max-width: 640px) {
   .navbar__links {
     display: none;
   }

@@ -2,6 +2,8 @@
    F1 PitWall – Base Styles
    =========================== */
 
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,700;1,800;1,900&display=swap');
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -9,19 +11,22 @@
 }
 
 :root {
-  --color-bg: #0d0d0d;
-  --color-surface: #1a1a1a;
-  --color-surface-raised: #242424;
-  --color-border: #2e2e2e;
+  --color-bg: #0a0a12;
+  --color-surface: #13131c;
+  --color-surface-raised: #1e1e2a;
+  --color-border: #22222e;
   --color-primary: #e10600;
   --color-primary-hover: #ff1a17;
+  --color-gold: #f5c842;
   --color-text: #f0f0f0;
-  --color-text-muted: #888888;
-  --color-text-subtle: #555555;
+  --color-text-muted: #888899;
+  --color-text-subtle: #44444f;
   --color-success: #00d2be;
   --color-warning: #ffd700;
 
-  --nav-height: 60px;
+  --font-display: 'Barlow Condensed', 'Inter', system-ui, sans-serif;
+
+  --nav-height: 84px;
   --max-width: 1200px;
   --radius: 6px;
   --radius-lg: 10px;

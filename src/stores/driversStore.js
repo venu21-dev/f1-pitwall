@@ -3,7 +3,7 @@ import { defineStore } from 'pinia'
 import { f1Api } from '@/services/f1Api'
 
 export const useDriversStore = defineStore('drivers', () => {
-  // ─── State ──────────────────────────────────────────────────────────────────
+  // ─── State ───────────────────────────────────────────────────────────────────
 
   /** Cache: { [year]: DriverStanding[] } – verhindert Doppel-Requests */
   const standingsCache = ref({})
@@ -11,41 +11,57 @@ export const useDriversStore = defineStore('drivers', () => {
   /** Cache: { [driverId]: Driver } */
   const driverInfoCache = ref({})
 
-  /** Aktuell angezeigte Saison */
-  const currentYear = ref(2024)
+  /**
+   * Tatsächliches Saison-Jahr (z.B. "2025"), wird nach dem ersten
+   * 'current'-Fetch gesetzt. Nie 'current' nach einem erfolgreichen Fetch.
+   */
+  const currentYear = ref(null)
+
+  /** Aktuelle Runde der Saison (aus Standings-Response), 0 = noch kein Rennen */
+  const currentRound = ref(0)
+
+  /** True solange ein 'current'-Fetch noch nicht abgeschlossen wurde */
+  const currentSeasonFetched = ref(false)
 
   const loading = ref(false)
   const error = ref(null)
 
   // ─── Getters ─────────────────────────────────────────────────────────────────
 
-  /** Fahrerwertung für das aktuell gewählte Jahr */
-  const standings = computed(() => standingsCache.value[currentYear.value] ?? [])
+  const standings = computed(() =>
+    currentYear.value ? (standingsCache.value[currentYear.value] ?? []) : []
+  )
 
-  /** Nur die Top-3 Fahrer */
   const topThree = computed(() => standings.value.slice(0, 3))
 
-  /** True wenn Standings für currentYear bereits geladen sind */
   const hasStandings = computed(() => standings.value.length > 0)
 
   // ─── Actions ─────────────────────────────────────────────────────────────────
 
   /**
-   * Lädt die Fahrerwertung für ein Jahr.
-   * Wird gecacht – bei erneutem Aufruf mit gleichem Jahr kein API-Request.
-   * @param {number|string} year
+   * Lädt die Fahrerwertung.
+   * - 'current' → lädt aktuelle Saison, danach in echtem Jahr gecacht
+   * - Jahreszahl → aus Cache oder API
    */
-  async function fetchStandings(year = currentYear.value) {
+  async function fetchStandings(year = 'current') {
     const key = String(year)
-    if (standingsCache.value[key]) {
+
+    // 'current' bereits geladen → nicht nochmal fetchen
+    if (key === 'current' && currentSeasonFetched.value) return
+    // Spezifisches Jahr bereits im Cache
+    if (key !== 'current' && standingsCache.value[key]) {
       currentYear.value = key
       return
     }
+
     loading.value = true
     error.value = null
     try {
-      standingsCache.value[key] = await f1Api.getDriverStandings(year)
-      currentYear.value = key
+      const { season, round, standings: data } = await f1Api.getDriverStandings(year)
+      standingsCache.value[season] = data
+      currentYear.value = season
+      currentRound.value = round
+      if (key === 'current') currentSeasonFetched.value = true
     } catch (err) {
       error.value = err.message
     } finally {
@@ -55,13 +71,9 @@ export const useDriversStore = defineStore('drivers', () => {
 
   /**
    * Lädt Basisinfo zu einem Fahrer (gecacht).
-   * @param {string} driverId
-   * @returns {Promise<Driver|null>}
    */
   async function fetchDriverInfo(driverId) {
-    if (driverInfoCache.value[driverId]) {
-      return driverInfoCache.value[driverId]
-    }
+    if (driverInfoCache.value[driverId]) return driverInfoCache.value[driverId]
     loading.value = true
     error.value = null
     try {
@@ -76,23 +88,20 @@ export const useDriversStore = defineStore('drivers', () => {
     }
   }
 
-  /** Setzt das aktive Jahr ohne einen neuen Fetch auszulösen */
   function setYear(year) {
     currentYear.value = String(year)
   }
 
   return {
-    // state
     standingsCache,
     driverInfoCache,
     currentYear,
+    currentRound,
     loading,
     error,
-    // getters
     standings,
     topThree,
     hasStandings,
-    // actions
     fetchStandings,
     fetchDriverInfo,
     setYear,

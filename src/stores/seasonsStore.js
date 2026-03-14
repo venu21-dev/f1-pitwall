@@ -3,43 +3,58 @@ import { defineStore } from 'pinia'
 import { f1Api } from '@/services/f1Api'
 
 export const useSeasonsStore = defineStore('seasons', () => {
-  // ─── State ──────────────────────────────────────────────────────────────────
+  // ─── State ───────────────────────────────────────────────────────────────────
 
   /** Cache: { [year]: Race[] } */
   const racesCache = ref({})
 
-  const selectedYear = ref(2024)
+  /** Cache: { [year]: ConstructorStanding[] } */
+  const constructorCache = ref({})
+
+  /**
+   * Tatsächliches Saison-Jahr – wird nach erstem 'current'-Fetch gesetzt.
+   */
+  const selectedYear = ref(null)
+
+  const racesFetched = ref(false)
+  const constructorFetched = ref(false)
+
   const loading = ref(false)
   const error = ref(null)
 
   // ─── Getters ─────────────────────────────────────────────────────────────────
 
-  /** Alle Rennen des gewählten Jahres */
-  const races = computed(() => racesCache.value[selectedYear.value] ?? [])
+  const races = computed(() =>
+    selectedYear.value ? (racesCache.value[selectedYear.value] ?? []) : []
+  )
 
-  /** Anzahl Rennen */
   const totalRaces = computed(() => races.value.length)
 
-  /** True wenn Renndaten für selectedYear geladen sind */
   const hasRaces = computed(() => races.value.length > 0)
+
+  const constructorStandings = computed(() =>
+    selectedYear.value ? (constructorCache.value[selectedYear.value] ?? []) : []
+  )
+
+  /** Aktuell führendes Konstrukteur-Objekt (Position 1) */
+  const constructorChampion = computed(() => constructorStandings.value[0] ?? null)
 
   // ─── Actions ─────────────────────────────────────────────────────────────────
 
-  /**
-   * Lädt alle Rennen einer Saison (gecacht).
-   * @param {number|string} year
-   */
-  async function fetchRaces(year = selectedYear.value) {
+  async function fetchRaces(year = 'current') {
     const key = String(year)
-    if (racesCache.value[key]) {
+    if (key === 'current' && racesFetched.value) return
+    if (key !== 'current' && racesCache.value[key]) {
       selectedYear.value = key
       return
     }
     loading.value = true
     error.value = null
     try {
-      racesCache.value[key] = await f1Api.getRaces(year)
-      selectedYear.value = key
+      const { season, races: data } = await f1Api.getRaces(year)
+      racesCache.value[season] = data
+      selectedYear.value = season
+      if (key === 'current') racesFetched.value = true
     } catch (err) {
       error.value = err.message
     } finally {
@@ -47,23 +62,44 @@ export const useSeasonsStore = defineStore('seasons', () => {
     }
   }
 
-  /** Setzt das aktive Jahr ohne Fetch */
+  async function fetchConstructorStandings(year = 'current') {
+    const key = String(year)
+    if (key === 'current' && constructorFetched.value) return
+    if (key !== 'current' && constructorCache.value[key]) {
+      selectedYear.value = key
+      return
+    }
+    loading.value = true
+    error.value = null
+    try {
+      const { season, standings } = await f1Api.getConstructorStandings(year)
+      constructorCache.value[season] = standings
+      selectedYear.value = season
+      if (key === 'current') constructorFetched.value = true
+    } catch (err) {
+      error.value = err.message
+    } finally {
+      loading.value = false
+    }
+  }
+
   function setYear(year) {
     selectedYear.value = String(year)
   }
 
   return {
-    // state
     racesCache,
+    constructorCache,
     selectedYear,
     loading,
     error,
-    // getters
     races,
     totalRaces,
     hasRaces,
-    // actions
+    constructorStandings,
+    constructorChampion,
     fetchRaces,
+    fetchConstructorStandings,
     setYear,
   }
 })

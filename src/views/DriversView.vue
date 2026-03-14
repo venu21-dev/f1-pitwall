@@ -1,12 +1,231 @@
-<script setup></script>
+<script setup>
+import { ref, computed, watch, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useDriversStore } from '@/stores/driversStore'
+import StandingsTable from '@/components/StandingsTable.vue'
+import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import ErrorMessage from '@/components/ErrorMessage.vue'
+
+const router = useRouter()
+const store = useDriversStore()
+
+// ── Lokaler State ────────────────────────────────────────────────────────────
+const selectedYear = ref(null)
+const activeStandings = ref([])
+const activeSparklines = ref({})
+const activePodiums = ref({})
+const activePoles = ref({})
+
+// Alle verfügbaren Jahre von 2020 bis aktuellem Jahr
+const availableYears = computed(() => {
+  const current = Number(store.currentYear) || new Date().getFullYear()
+  const years = []
+  for (let y = current; y >= 2020; y--) years.push(y)
+  return years
+})
+
+// ── Hilfsfunktionen ──────────────────────────────────────────────────────────
+
+/** Kopiert Sparklines/Podiums/Poles aus dem Store-Cache in lokale Refs */
+function syncStats(year) {
+  const key = String(year)
+  activeSparklines.value = { ...store.sparklineCache[key] }
+  activePodiums.value = { ...store.podiumsCache[key] }
+  activePoles.value = { ...store.polesCache[key] }
+}
+
+/** Lädt Standings für ein Jahr und aktualisiert lokale Refs */
+async function loadYear(year) {
+  const key = String(year)
+
+  if (store.standingsCache[key]) {
+    // Bereits gecacht → sofort anzeigen
+    activeStandings.value = store.standingsCache[key]
+  } else {
+    activeStandings.value = []
+    await store.fetchStandingsForYear(year)
+    activeStandings.value = store.standingsCache[key] ?? []
+  }
+
+  syncStats(year)
+
+  // Sparklines/Podiums/Poles im Hintergrund laden
+  const ids = activeStandings.value.map((s) => s.Driver.driverId)
+  if (ids.length) store.fetchDriverStats(year, ids)
+}
+
+// ── Reaktivität: wenn Hintergrund-Stats fertig sind, lokale Refs aktualisieren
+watch(
+  () => store.statsLoading,
+  (loading) => {
+    if (!loading && selectedYear.value) syncStats(selectedYear.value)
+  }
+)
+
+// ── Jahreswechsel ────────────────────────────────────────────────────────────
+async function selectYear(year) {
+  selectedYear.value = year
+  await loadYear(year)
+}
+
+// ── Initialisierung ──────────────────────────────────────────────────────────
+onMounted(async () => {
+  await store.fetchStandings('current')
+  const year = Number(store.currentYear)
+  selectedYear.value = year
+  await loadYear(year)
+})
+
+// ── Navigation ───────────────────────────────────────────────────────────────
+function goToDriver(driverId) {
+  router.push({ name: 'driver-detail', params: { id: driverId } })
+}
+
+// ── Error Retry ──────────────────────────────────────────────────────────────
+async function retry() {
+  if (!selectedYear.value) {
+    await store.fetchStandings('current')
+    selectedYear.value = Number(store.currentYear)
+  }
+  await loadYear(selectedYear.value)
+}
+</script>
 
 <template>
-  <div class="page container">
-    <span class="placeholder-badge">Fahrerwertung</span>
-    <h1 class="page-title">
-      Fahrer <span>Wertung</span>
-    </h1>
-    <div class="divider"></div>
-    <p class="page-subtitle">Fahrerwertung mit Saison-Filter – Daten folgen in Kürze.</p>
+  <div class="drivers page container">
+
+    <!-- ── Header ──────────────────────────────────────── -->
+    <div class="drivers__header">
+      <h1 class="drivers__title">Fahrerwertung</h1>
+
+      <!-- Jahres-Filter -->
+      <div class="year-filter" role="group" aria-label="Saison wählen">
+        <button
+          v-for="year in availableYears"
+          :key="year"
+          class="year-btn"
+          :class="{ 'year-btn--active': year === selectedYear }"
+          @click="selectYear(year)"
+        >
+          {{ year }}
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Inhalt ───────────────────────────────────────── -->
+    <div class="drivers__body card-dark">
+
+      <LoadingSpinner v-if="store.loading" label="Lade Fahrerwertung…" />
+
+      <ErrorMessage
+        v-else-if="store.error"
+        :message="store.error"
+        retry-label="Erneut versuchen"
+        @retry="retry"
+      />
+
+      <p v-else-if="activeStandings.length === 0 && selectedYear" class="drivers__empty">
+        Keine Daten für die Saison {{ selectedYear }}.
+      </p>
+
+      <StandingsTable
+        v-else
+        :standings="activeStandings"
+        :sparklines="activeSparklines"
+        :podiums="activePodiums"
+        :poles="activePoles"
+        :stats-loading="store.statsLoading"
+        @row-click="goToDriver"
+      />
+
+    </div>
+
   </div>
 </template>
+
+<style scoped>
+.drivers {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ── Header ──────────────────────────────────────── */
+.drivers__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.drivers__title {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 900;
+  font-size: clamp(2.4rem, 6vw, 4rem);
+  text-transform: uppercase;
+  line-height: 0.95;
+  color: #fff;
+  letter-spacing: -0.01em;
+}
+
+/* ── Jahres-Filter ───────────────────────────────── */
+.year-filter {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.year-btn {
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-raised);
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
+  white-space: nowrap;
+}
+
+.year-btn:hover {
+  color: var(--color-text);
+  border-color: var(--color-text-subtle);
+}
+
+.year-btn--active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+/* ── Tabellen-Card ───────────────────────────────── */
+.card-dark {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.drivers__empty {
+  padding: 3rem;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-style: italic;
+  font-size: 0.95rem;
+}
+
+/* ── Responsive ──────────────────────────────────── */
+@media (max-width: 640px) {
+  .drivers__header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .year-filter {
+    justify-content: flex-start;
+  }
+}
+</style>

@@ -93,6 +93,18 @@ export const f1Api = {
   },
 
   /**
+   * Alle Qualifying-Ergebnisse eines Fahrers in einer Saison.
+   * Wird genutzt um Pole Positions zu zählen (position === "1").
+   * @param {number|string} year
+   * @param {string} driverId
+   * @returns {Promise<Race[]>}  Jedes Race-Objekt enthält QualifyingResults[0] für diesen Fahrer
+   */
+  async getDriverQualifyingResults(year, driverId) {
+    const data = await fetchJson(`/${year}/drivers/${driverId}/qualifying`)
+    return data.MRData.RaceTable.Races
+  },
+
+  /**
    * Alle Ergebnisse eines einzelnen Rennens.
    * @param {number|string} year
    * @param {number|string} round

@@ -1,16 +1,22 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { useDriversStore } from '@/stores/driversStore'
+import f1Logo from '@/assets/styles/F1_logo.png'
 
 const route = useRoute()
+const driversStore = useDriversStore()
 const menuOpen = ref(false)
 
-const navLinks = [
-  { name: 'Home', to: '/' },
-  { name: 'Fahrer', to: '/drivers' },
-  { name: 'Saison', to: '/seasons/2024' },
-  { name: 'Vergleich', to: '/compare' },
-]
+const navLinks = computed(() => {
+  const year = driversStore.currentYear || new Date().getFullYear()
+  return [
+    { name: 'Home',      to: '/' },
+    { name: 'Fahrer',    to: '/drivers' },
+    { name: 'Saison',    to: `/seasons/${year}` },
+    { name: 'Vergleich', to: '/compare' },
+  ]
+})
 
 function closeMenu() {
   menuOpen.value = false
@@ -28,10 +34,10 @@ function isActive(path) {
 
       <!-- Logo -->
       <RouterLink to="/" class="navbar__logo" @click="closeMenu">
-        <span class="navbar__logo-mark">F1</span>
+        <img :src="f1Logo" alt="F1" class="navbar__logo-img" />
       </RouterLink>
 
-      <span class="navbar__sep" aria-hidden="true"></span>
+      <span class="navbar__gap"></span>
 
       <!-- Desktop Links -->
       <nav class="navbar__links" aria-label="Hauptnavigation">
@@ -89,7 +95,7 @@ function isActive(path) {
   left: 0;
   right: 0;
   z-index: 100;
-  padding: 14px 1.5rem;
+  padding: 24px 1.5rem;
 }
 
 /* ── Pill container ──────────────────────────────────── */
@@ -114,17 +120,19 @@ function isActive(path) {
   align-items: center;
   flex-shrink: 0;
   text-decoration: none;
+  margin-left: 0.75rem;
 }
 
-.navbar__logo-mark {
-  font-family: var(--font-display);
-  font-style: italic;
-  font-weight: 900;
-  font-size: 1.5rem;
-  color: var(--color-primary);
-  letter-spacing: -0.02em;
-  line-height: 1;
-  user-select: none;
+.navbar__gap {
+  width: 2.5rem;
+  flex-shrink: 0;
+}
+
+.navbar__logo-img {
+  height: 30px;
+  width: auto;
+  display: block;
+  object-fit: contain;
 }
 
 /* ── Desktop nav links ───────────────────────────────── */
@@ -135,7 +143,7 @@ function isActive(path) {
 }
 
 .navbar__link {
-  padding: 0.4rem 1rem;
+  padding: 0.4rem 0.55rem;
   border-radius: 999px;
   font-size: 0.95rem;
   font-weight: 500;

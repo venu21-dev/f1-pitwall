@@ -1,86 +1,99 @@
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { f1Api } from '@/services/f1Api'
 
 export const useCompareStore = defineStore('compare', () => {
-  // ─── State ──────────────────────────────────────────────────────────────────
+  // ─── State ───────────────────────────────────────────────────────────────────
 
-  /** driverId von Fahrer A, z.B. "hamilton" */
-  const driverA = ref(null)
+  const driverAId = ref('max_verstappen')
+  const driverBId = ref('norris')
+  const selectedYear = ref(null)
 
-  /** driverId von Fahrer B, z.B. "verstappen" */
-  const driverB = ref(null)
+  /** Stabile Ergebnis-Refs – werden nach jedem Fetch explizit gesetzt */
+  const statsA = ref(_emptyStats())
+  const statsB = ref(_emptyStats())
 
-  /** Vergleichsjahr */
-  const year = ref(2024)
-
-  /** Rennergebnisse (Race[]) für Fahrer A */
-  const resultsA = ref([])
-
-  /** Rennergebnisse (Race[]) für Fahrer B */
-  const resultsB = ref([])
+  /** Kumulierte Punkte pro Rennen für den Linienchart */
+  const chartLabels = ref([])
+  const chartDataA = ref([])
+  const chartDataB = ref([])
 
   const loading = ref(false)
   const error = ref(null)
 
-  // ─── Getters ─────────────────────────────────────────────────────────────────
+  // ─── Interner Cache (non-reactive, verhindert Doppel-Requests) ───────────────
 
-  /** True wenn beide Fahrer gesetzt sind */
-  const isReady = computed(() => Boolean(driverA.value && driverB.value))
+  const _racesCache = {}
+  const _qualiCache = {}
 
-  /** True wenn Ergebnisse beider Fahrer geladen sind */
-  const hasResults = computed(() => resultsA.value.length > 0 && resultsB.value.length > 0)
+  // ─── Hilfsfunktionen ─────────────────────────────────────────────────────────
 
-  /**
-   * Vereinfachte Vergleichsdaten pro Rennen:
-   * [{ round, raceName, posA, posB, pointsA, pointsB }]
-   */
-  const chartData = computed(() => {
-    if (!hasResults.value) return []
-    return resultsA.value.map((raceA) => {
-      const raceB = resultsB.value.find((r) => r.round === raceA.round)
-      return {
-        round: Number(raceA.round),
-        raceName: raceA.raceName,
-        posA: Number(raceA.Results?.[0]?.position ?? 0),
-        posB: Number(raceB?.Results?.[0]?.position ?? 0),
-        pointsA: Number(raceA.Results?.[0]?.points ?? 0),
-        pointsB: Number(raceB?.Results?.[0]?.points ?? 0),
-      }
+  function _emptyStats() {
+    return { points: 0, wins: 0, poles: 0, podiums: 0, dnfs: 0, avgPoints: 0 }
+  }
+
+  function _hasDNF(r) {
+    const s = r.Results?.[0]?.status ?? ''
+    return s !== 'Finished' && !s.startsWith('+')
+  }
+
+  function _computeStats(races, quali) {
+    const points  = races.reduce((s, r) => s + Number(r.Results?.[0]?.points ?? 0), 0)
+    const wins    = races.filter((r) => r.Results?.[0]?.position === '1').length
+    const podiums = races.filter((r) => Number(r.Results?.[0]?.position) <= 3).length
+    const dnfs    = races.filter((r) => _hasDNF(r)).length
+    const poles   = quali.filter((r) => r.QualifyingResults?.[0]?.position === '1').length
+    const avgPoints = races.length ? +(points / races.length).toFixed(1) : 0
+    return { points, wins, poles, podiums, dnfs, avgPoints }
+  }
+
+  function _cumulPoints(races) {
+    let cum = 0
+    return races.map((r) => {
+      cum += Number(r.Results?.[0]?.points ?? 0)
+      return cum
     })
-  })
+  }
+
+  function _refreshDerived(racesA, qualiA, racesB, qualiB) {
+    statsA.value = _computeStats(racesA, qualiA)
+    statsB.value = _computeStats(racesB, qualiB)
+
+    const longer = racesA.length >= racesB.length ? racesA : racesB
+    chartLabels.value = longer.map((r) => `R${String(r.round).padStart(2, '0')}`)
+    chartDataA.value  = _cumulPoints(racesA)
+    chartDataB.value  = _cumulPoints(racesB)
+  }
+
+  async function _fetchDriver(year, driverId) {
+    const key = `${year}_${driverId}`
+    if (!_racesCache[key]) {
+      const [racesRes, qualiRes] = await Promise.allSettled([
+        f1Api.getDriverSeasonResults(year, driverId),
+        f1Api.getDriverQualifyingResults(year, driverId),
+      ])
+      _racesCache[key] = racesRes.status === 'fulfilled' ? racesRes.value : []
+      _qualiCache[key] = qualiRes.status === 'fulfilled' ? qualiRes.value : []
+    }
+    return { races: _racesCache[key], quali: _qualiCache[key] }
+  }
 
   // ─── Actions ─────────────────────────────────────────────────────────────────
 
-  function setDriverA(id) {
-    driverA.value = id
-  }
-
-  function setDriverB(id) {
-    driverB.value = id
-  }
-
-  function setYear(y) {
-    year.value = Number(y)
-  }
-
   /**
-   * Lädt Rennergebnisse für beide Fahrer parallel.
-   * Setzt loading/error entsprechend.
+   * Lädt Rennergebnisse + Qualifying für beide Fahrer parallel.
+   * Berechnet danach Stats und Chart-Daten.
    */
-  async function fetchComparison() {
-    if (!isReady.value) return
+  async function loadComparison(year) {
+    selectedYear.value = String(year)
     loading.value = true
     error.value = null
-    resultsA.value = []
-    resultsB.value = []
     try {
       const [a, b] = await Promise.all([
-        f1Api.getDriverSeasonResults(year.value, driverA.value),
-        f1Api.getDriverSeasonResults(year.value, driverB.value),
+        _fetchDriver(year, driverAId.value),
+        _fetchDriver(year, driverBId.value),
       ])
-      resultsA.value = a
-      resultsB.value = b
+      _refreshDerived(a.races, a.quali, b.races, b.quali)
     } catch (err) {
       error.value = err.message
     } finally {
@@ -88,33 +101,44 @@ export const useCompareStore = defineStore('compare', () => {
     }
   }
 
-  /** Setzt den gesamten Vergleich zurück */
-  function reset() {
-    driverA.value = null
-    driverB.value = null
-    resultsA.value = []
-    resultsB.value = []
+  /**
+   * Wechselt einen Fahrer und lädt dessen Daten nach.
+   * @param {'A'|'B'} side
+   * @param {string} driverId
+   */
+  async function switchDriver(side, driverId) {
+    if (side === 'A') driverAId.value = driverId
+    else driverBId.value = driverId
+
+    loading.value = true
     error.value = null
+    try {
+      const [a, b] = await Promise.all([
+        _fetchDriver(selectedYear.value, driverAId.value),
+        _fetchDriver(selectedYear.value, driverBId.value),
+      ])
+      _refreshDerived(a.races, a.quali, b.races, b.quali)
+    } catch (err) {
+      error.value = err.message
+    } finally {
+      loading.value = false
+    }
   }
 
   return {
     // state
-    driverA,
-    driverB,
-    year,
-    resultsA,
-    resultsB,
+    driverAId,
+    driverBId,
+    selectedYear,
+    statsA,
+    statsB,
+    chartLabels,
+    chartDataA,
+    chartDataB,
     loading,
     error,
-    // getters
-    isReady,
-    hasResults,
-    chartData,
     // actions
-    setDriverA,
-    setDriverB,
-    setYear,
-    fetchComparison,
-    reset,
+    loadComparison,
+    switchDriver,
   }
 })

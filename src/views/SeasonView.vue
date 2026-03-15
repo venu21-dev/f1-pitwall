@@ -113,11 +113,11 @@ async function retry() {
     <!-- ── Header ───────────────────────────────────────── -->
     <div class="season__header">
       <div class="season__title-group">
-        <h1 class="season__title">Saison {{ year }}</h1>
         <p v-if="!pageLoading && !pageError" class="season__meta">
           {{ activeRaces.length }} Rennen
           <template v-if="completedCount > 0"> · {{ completedCount }} abgeschlossen</template>
         </p>
+        <h1 class="season__title">Saison {{ year }}</h1>
       </div>
 
       <!-- Jahres-Filter -->

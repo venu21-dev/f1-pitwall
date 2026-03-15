@@ -8,6 +8,12 @@ export const useSeasonsStore = defineStore('seasons', () => {
   /** Cache: { [year]: Race[] } */
   const racesCache = ref({})
 
+  /**
+   * Sieger-Cache: { [year]: Race[] }
+   * Jedes Race-Objekt enthält Results[0] = Sieger des Rennens.
+   */
+  const winnersCache = ref({})
+
   /** Cache: { [year]: ConstructorStanding[] } */
   const constructorCache = ref({})
 
@@ -21,6 +27,7 @@ export const useSeasonsStore = defineStore('seasons', () => {
 
   const loading = ref(false)
   const error = ref(null)
+  const winnersLoading = ref(false)
 
   // ─── Getters ─────────────────────────────────────────────────────────────────
 
@@ -83,6 +90,43 @@ export const useSeasonsStore = defineStore('seasons', () => {
     }
   }
 
+  /**
+   * Lädt Rennen für ein bestimmtes Jahr OHNE selectedYear zu ändern.
+   * Gedacht für SeasonView damit andere Views unberührt bleiben.
+   */
+  async function fetchRacesForYear(year) {
+    const key = String(year)
+    if (racesCache.value[key]) return
+    loading.value = true
+    error.value = null
+    try {
+      const { season, races: data } = await f1Api.getRaces(year)
+      racesCache.value[season] = data
+    } catch (err) {
+      error.value = err.message
+    } finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * Lädt alle Sieger einer Saison (P1 pro Rennen).
+   * Gecacht unter [year].
+   */
+  async function fetchSeasonWinners(year) {
+    const key = String(year)
+    if (winnersCache.value[key]) return
+    winnersLoading.value = true
+    try {
+      const races = await f1Api.getSeasonWinners(year)
+      winnersCache.value[key] = races
+    } catch {
+      winnersCache.value[key] = []
+    } finally {
+      winnersLoading.value = false
+    }
+  }
+
   function setYear(year) {
     selectedYear.value = String(year)
   }
@@ -90,15 +134,19 @@ export const useSeasonsStore = defineStore('seasons', () => {
   return {
     racesCache,
     constructorCache,
+    winnersCache,
     selectedYear,
     loading,
     error,
+    winnersLoading,
     races,
     totalRaces,
     hasRaces,
     constructorStandings,
     constructorChampion,
     fetchRaces,
+    fetchRacesForYear,
+    fetchSeasonWinners,
     fetchConstructorStandings,
     setYear,
   }

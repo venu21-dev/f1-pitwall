@@ -115,4 +115,16 @@ export const f1Api = {
     const races = data.MRData.RaceTable.Races
     return races.length ? races[0] : null
   },
+
+  /**
+   * Alle Sieger einer Saison (Position 1 jedes Rennens).
+   * Endpoint /{year}/results/1 liefert nur den Erstplatzierten pro Rennen,
+   * dadurch reicht das Standard-Limit für eine ganze Saison.
+   * @param {number|string} year
+   * @returns {Promise<Race[]>}  Jedes Race-Objekt enthält Results[0] = Sieger
+   */
+  async getSeasonWinners(year) {
+    const data = await fetchJson(`/${year}/results/1`)
+    return data.MRData.RaceTable.Races
+  },
 }

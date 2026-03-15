@@ -20,7 +20,7 @@ const activePoles = ref({})
 const availableYears = computed(() => {
   const current = Number(store.currentYear) || new Date().getFullYear()
   const years = []
-  for (let y = current; y >= 2020; y--) years.push(y)
+  for (let y = 2020; y <= current; y++) years.push(y)
   return years
 })
 

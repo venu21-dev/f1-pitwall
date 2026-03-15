@@ -30,6 +30,22 @@ export const useDriversStore = defineStore('drivers', () => {
   const polesCache = ref({})
 
   /**
+   * Rohe Rennergebnisse für Detailseite.
+   * { [`${year}_${driverId}`]: Race[] }
+   */
+  const driverRacesCache = ref({})
+
+  /**
+   * Rohe Qualifying-Ergebnisse für Detailseite.
+   * { [`${year}_${driverId}`]: Race[] }
+   */
+  const driverQualiCache = ref({})
+
+  /** Lade- und Fehler-State für DriverDetailView */
+  const detailLoading = ref(false)
+  const detailError = ref(null)
+
+  /**
    * Tatsächliches Saison-Jahr (z.B. "2026"), wird nach dem ersten
    * 'current'-Fetch gesetzt. Nie 'current' nach einem erfolgreichen Fetch.
    */
@@ -164,6 +180,37 @@ export const useDriversStore = defineStore('drivers', () => {
   }
 
   /**
+   * Lädt Rennergebnisse + Qualifying für einen Fahrer in einem Jahr.
+   * Gecacht unter `${year}_${driverId}`.
+   * @param {number|string} year
+   * @param {string} driverId
+   */
+  async function fetchDriverDetail(year, driverId) {
+    const key = `${String(year)}_${driverId}`
+    if (driverRacesCache.value[key] !== undefined) return
+
+    detailLoading.value = true
+    detailError.value = null
+    try {
+      const [racesResult, qualiResult] = await Promise.allSettled([
+        f1Api.getDriverSeasonResults(year, driverId),
+        f1Api.getDriverQualifyingResults(year, driverId),
+      ])
+
+      if (racesResult.status === 'rejected' && qualiResult.status === 'rejected') {
+        throw racesResult.reason
+      }
+
+      driverRacesCache.value[key] = racesResult.status === 'fulfilled' ? racesResult.value : []
+      driverQualiCache.value[key] = qualiResult.status === 'fulfilled' ? qualiResult.value : []
+    } catch (err) {
+      detailError.value = err.message
+    } finally {
+      detailLoading.value = false
+    }
+  }
+
+  /**
    * Lädt Basisinfo zu einem Fahrer (gecacht).
    */
   async function fetchDriverInfo(driverId) {
@@ -193,11 +240,15 @@ export const useDriversStore = defineStore('drivers', () => {
     sparklineCache,
     podiumsCache,
     polesCache,
+    driverRacesCache,
+    driverQualiCache,
     currentYear,
     currentRound,
     loading,
     error,
     statsLoading,
+    detailLoading,
+    detailError,
     // getters
     standings,
     topThree,
@@ -206,6 +257,7 @@ export const useDriversStore = defineStore('drivers', () => {
     fetchStandings,
     fetchStandingsForYear,
     fetchDriverStats,
+    fetchDriverDetail,
     fetchDriverInfo,
     setYear,
   }

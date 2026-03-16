@@ -48,6 +48,7 @@ body {
   line-height: 1.6;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
 a {
@@ -63,6 +64,7 @@ img {
 button {
   cursor: pointer;
   font-family: inherit;
+  min-height: 44px;
 }
 
 /* Layout Helpers */

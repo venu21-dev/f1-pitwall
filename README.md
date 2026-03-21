@@ -38,6 +38,11 @@ npm run preview
 npm run test:unit
 ```
 
+## Umgebungsvariablen
+
+Dieses Projekt benötigt **keine Umgebungsvariablen** und keine `.env`-Datei.
+Die Jolpica F1 API ist öffentlich zugänglich und erfordert keinen API-Key.
+
 ## Verwendete API
 
 **Jolpica F1 API** – öffentliche, kostenlose Ergast-kompatible API
@@ -50,7 +55,7 @@ Dokumentation: https://github.com/jolpica/jolpica-f1
 
 | Route | Beschreibung |
 |---|---|
-| `/` | Startseite – aktuelle Saison, Top 3 Fahrer |
+| `/` | Startseite – aktuelle Saison, Top 8 Fahrerwertung |
 | `/drivers` | Fahrerwertung mit Saison-Filter (2020–aktuell) |
 | `/drivers/:id` | Detailseite eines Fahrers – KPIs, Rennergebnisse |
 | `/seasons/:year` | Saisonansicht – Rennkalender mit Siegern |
@@ -66,6 +71,8 @@ Dokumentation: https://github.com/jolpica/jolpica-f1
 - [Chart.js](https://www.chartjs.org/) + [vue-chartjs](https://vue-chartjs.org/) – Linienchart
 
 ## Deployment (Vercel)
+
+**Live:** https://f1-pitwall-sand.vercel.app
 
 Das Projekt enthält eine `vercel.json` mit SPA-Redirect-Regel.
 Einfach das Repository mit Vercel verbinden – kein weiterer Konfigurationsaufwand.

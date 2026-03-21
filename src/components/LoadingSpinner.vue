@@ -6,8 +6,8 @@ defineProps({
 </script>
 
 <template>
-  <div class="spinner-wrap" :class="{ 'spinner-wrap--small': small }">
-    <div class="spinner"></div>
+  <div class="spinner-wrap" :class="{ 'spinner-wrap--small': small }" role="status" aria-live="polite" :aria-label="label || 'Wird geladen'">
+    <div class="spinner" aria-hidden="true"></div>
     <p v-if="label" class="spinner-label">{{ label }}</p>
   </div>
 </template>

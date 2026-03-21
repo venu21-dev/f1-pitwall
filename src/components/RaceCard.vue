@@ -77,13 +77,13 @@ const dateLabel = computed(() => {
 
 <style scoped>
 .race-card {
-  background: var(--color-surface);
+  background: linear-gradient(to bottom, #262D36 0%, #202630 50%, #1D232D 100%);
   border: 1px solid var(--color-border);
   border-radius: 16px;
-  padding: 1.25rem 1.25rem 1.1rem;
+  padding: 1.6rem 1.6rem 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 0.9rem;
+  gap: 1.4rem;
   transition: border-color var(--transition), transform var(--transition);
 }
 
@@ -93,12 +93,12 @@ const dateLabel = computed(() => {
 }
 
 .race-card--upcoming {
-  opacity: 0.65;
+  opacity: 0.30;
 }
 
 /* ── Runden-Label ─────────────────────────────────── */
 .race-card__round {
-  font-size: 0.65rem;
+  font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -120,7 +120,7 @@ const dateLabel = computed(() => {
   text-transform: uppercase;
   color: #fff;
   line-height: 1;
-  letter-spacing: -0.02em;
+  letter-spacing: calc(-0.02em + 2px);
   flex-shrink: 0;
   min-width: 3.5ch;
 }
@@ -151,15 +151,14 @@ const dateLabel = computed(() => {
 
 /* ── Trennlinie ───────────────────────────────────── */
 .race-card__divider {
-  height: 1px;
-  background: var(--color-border);
+  display: none;
 }
 
 /* ── Footer ───────────────────────────────────────── */
 .race-card__footer {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.45rem;
 }
 
 .race-card__footer-label {

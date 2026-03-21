@@ -39,8 +39,12 @@ async function selectYear(year) {
   await loadYear(year)
 }
 
+// ── Dropdown-Koordination ──────────────────────────────────────────────────
+const openSide = ref(null)
+
 // ── Fahrerwechsel ──────────────────────────────────────────────────────────
 async function onSelect({ side, driverId }) {
+  openSide.value = null
   await compareStore.switchDriver(side, driverId)
 }
 
@@ -85,10 +89,11 @@ const metrics = computed(() => {
   ]
 })
 
-/** Balkenbreite in % (0–100), relativ zum Maximum beider Werte */
+/** Balkenbreite in % (0–100), als Anteil am Total beider Werte */
 function barWidth(val, valA, valB) {
-  const max = Math.max(Number(valA), Number(valB), 0.01)
-  return Math.round((Number(val) / max) * 100)
+  const total = Number(valA) + Number(valB)
+  if (total === 0) return 50
+  return Math.round((Number(val) / total) * 100)
 }
 </script>
 
@@ -108,6 +113,7 @@ function barWidth(val, valA, valB) {
           :key="y"
           class="year-btn"
           :class="{ 'year-btn--active': y === selectedYear }"
+          :aria-pressed="y === selectedYear"
           @click="selectYear(y)"
         >
           {{ y }}
@@ -129,12 +135,14 @@ function barWidth(val, valA, valB) {
     <template v-else>
 
       <!-- ── Fahrer-Auswahl ────────────────────────────────── -->
-      <div class="driver-selector">
+      <div class="driver-selector anim-fade-up" style="animation-delay: 0.1s">
         <ComparePanel
           label="Fahrer A"
           :driver-id="compareStore.driverAId"
           :standings="activeStandings"
           side="A"
+          :open-side="openSide"
+          @opened="openSide = $event"
           @select="onSelect"
         />
 
@@ -145,12 +153,14 @@ function barWidth(val, valA, valB) {
           :driver-id="compareStore.driverBId"
           :standings="activeStandings"
           side="B"
+          :open-side="openSide"
+          @opened="openSide = $event"
           @select="onSelect"
         />
       </div>
 
       <!-- ── Metriken-Vergleich ─────────────────────────────── -->
-      <section class="metrics card-dark">
+      <section class="metrics card-dark anim-fade-up" style="animation-delay: 0.22s">
         <div
           v-for="m in metrics"
           :key="m.key"
@@ -184,7 +194,7 @@ function barWidth(val, valA, valB) {
       </section>
 
       <!-- ── Linienchart ────────────────────────────────────── -->
-      <section v-if="compareStore.chartLabels.length" class="chart-section card-dark">
+      <section v-if="compareStore.chartLabels.length" class="chart-section card-dark anim-fade-up" style="animation-delay: 0.36s">
         <h3 class="chart-title">PUNKTEVERLAUF · SAISON {{ selectedYear }}</h3>
         <LineChart
           :labels="compareStore.chartLabels"
@@ -202,6 +212,44 @@ function barWidth(val, valA, valB) {
 </template>
 
 <style scoped>
+/* ── Animationen ─────────────────────────────────── */
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes revealFromRight {
+  from { clip-path: inset(0 0 0 100%); }
+  to   { clip-path: inset(0 0 0 0); }
+}
+
+@keyframes revealFromLeft {
+  from { clip-path: inset(0 100% 0 0); }
+  to   { clip-path: inset(0 0 0 0); }
+}
+
+.compare__header {
+  animation: fadeInDown 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.anim-fade-up {
+  animation: fadeInUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Balken wachsen von der Mitte nach aussen */
+.bar--a {
+  animation: revealFromRight 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.5s both;
+}
+
+.bar--b {
+  animation: revealFromLeft 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.5s both;
+}
+
 .compare {
   display: flex;
   flex-direction: column;
@@ -209,7 +257,7 @@ function barWidth(val, valA, valB) {
 }
 
 .card-dark {
-  background: var(--color-surface);
+  background: linear-gradient(to bottom, #262D36 0%, #202630 50%, #1D232D 100%);
   border: 1px solid var(--color-border);
   border-radius: 14px;
   overflow: hidden;
@@ -246,7 +294,7 @@ function barWidth(val, valA, valB) {
   text-transform: uppercase;
   line-height: 0.95;
   color: #fff;
-  letter-spacing: -0.01em;
+  letter-spacing: calc(-0.01em + 2px);
 }
 
 /* ── Jahres-Filter ───────────────────────────────── */
@@ -258,22 +306,24 @@ function barWidth(val, valA, valB) {
 }
 
 .year-btn {
-  padding: 0.35rem 0.85rem;
+  padding: 0.3rem 0.75rem;
   border-radius: 999px;
   border: 1px solid var(--color-border);
-  background: var(--color-surface-raised);
+  background: #202730;
   color: var(--color-text-muted);
-  font-size: 0.8rem;
-  font-weight: 600;
+  font-family: var(--font-nav);
+  font-size: 0.78rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: background var(--transition), color var(--transition), border-color var(--transition);
+  transition: background var(--transition), color var(--transition), border-color var(--transition), box-shadow var(--transition);
   white-space: nowrap;
 }
 .year-btn:hover { color: var(--color-text); border-color: var(--color-text-subtle); }
 .year-btn--active {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
+  background: linear-gradient(to right, #FF3624, #E10500);
+  border-color: transparent;
   color: #fff;
+  box-shadow: 0 0 10px rgba(225, 5, 0, 0.4);
 }
 
 /* ── Fahrer-Selector ─────────────────────────────── */
@@ -281,6 +331,8 @@ function barWidth(val, valA, valB) {
   display: flex;
   align-items: center;
   gap: 1rem;
+  position: relative;
+  z-index: 200;
 }
 
 .vs-label {
@@ -288,7 +340,8 @@ function barWidth(val, valA, valB) {
   font-style: italic;
   font-weight: 900;
   font-size: 1.4rem;
-  color: var(--color-text-muted);
+  letter-spacing: 2px;
+  color: #ffffff;
   flex-shrink: 0;
 }
 
@@ -312,6 +365,7 @@ function barWidth(val, valA, valB) {
   font-style: italic;
   font-weight: 900;
   font-size: 1.1rem;
+  letter-spacing: 2px;
   color: #fff;
 }
 .metric-val--a { text-align: right; }

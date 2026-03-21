@@ -4,6 +4,22 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,700;1,800;1,900&display=swap');
 
+@font-face {
+  font-family: 'Aero';
+  src: url('./fonts/Aero.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Nexa Bold';
+  src: url('./fonts/Nexa Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -11,10 +27,10 @@
 }
 
 :root {
-  --color-bg: #0a0a12;
-  --color-surface: #13131c;
-  --color-surface-raised: #1e1e2a;
-  --color-border: #22222e;
+  --color-bg: #141A23;
+  --color-surface: #1D232D;
+  --color-surface-raised: #262D36;
+  --color-border: #353D49;
   --color-primary: #e10600;
   --color-primary-hover: #ff1a17;
   --color-gold: #f5c842;
@@ -24,7 +40,8 @@
   --color-success: #00d2be;
   --color-warning: #ffd700;
 
-  --font-display: 'Barlow Condensed', 'Inter', system-ui, sans-serif;
+  --font-display: 'Aero', 'Barlow Condensed', system-ui, sans-serif;
+  --font-nav: 'Nexa Bold', 'Barlow Condensed', system-ui, sans-serif;
 
   --nav-height: 84px;
   --max-width: 1200px;
@@ -43,7 +60,8 @@ html {
 
 body {
   font-family: var(--font-sans);
-  background-color: var(--color-bg);
+  background: linear-gradient(45deg, #141A23 0%, #161B25 50%, #1A2430 100%);
+  background-attachment: fixed;
   color: var(--color-text);
   line-height: 1.6;
   min-height: 100vh;

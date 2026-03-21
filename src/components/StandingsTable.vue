@@ -56,11 +56,13 @@ function posClass(pos) {
 
     <!-- ── Zeilen ────────────────────────────────────── -->
     <div
-      v-for="s in standings"
+      v-for="(s, i) in standings"
       :key="s.Driver.driverId"
       class="standings-row"
       role="button"
       tabindex="0"
+      :aria-label="`${s.Driver.givenName} ${s.Driver.familyName}, Position ${s.position}, ${s.points} Punkte`"
+      :style="{ animationDelay: `${i * 0.06}s` }"
       @click="emit('rowClick', s.Driver.driverId)"
       @keydown.enter="emit('rowClick', s.Driver.driverId)"
     >
@@ -127,11 +129,27 @@ function posClass(pos) {
 </template>
 
 <style scoped>
+/* ── Animationen ────────────────────────────────── */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.standings-row {
+  animation: fadeInUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 /* ── Layout-Raster ──────────────────────────────── */
 .standings-head,
 .standings-row {
   display: grid;
-  grid-template-columns: 52px 1fr 60px 60px 80px 80px 80px;
+  grid-template-columns: 52px 1fr 90px 90px 110px 110px 90px;
   align-items: center;
   gap: 0;
   padding: 0 1.5rem;
@@ -151,8 +169,8 @@ function posClass(pos) {
 
 /* ── Daten-Zeile ────────────────────────────────── */
 .standings-row {
-  padding-top: 0.75rem;
-  padding-bottom: 0.75rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
   border-bottom: 1px solid var(--color-border);
   cursor: pointer;
   transition: background var(--transition);
@@ -192,8 +210,9 @@ function posClass(pos) {
   font-family: var(--font-display);
   font-style: italic;
   font-weight: 900;
-  font-size: 1.35rem;
+  font-size: 1.75rem;
   line-height: 1;
+  letter-spacing: 2px;
   color: var(--color-text-muted);
   min-width: 28px;
   text-align: left;
@@ -220,8 +239,8 @@ function posClass(pos) {
 }
 
 .driver-name {
-  font-size: 0.95rem;
-  font-weight: 400;
+  font-size: 1.05rem;
+  font-weight: 200;
   color: var(--color-text);
   white-space: nowrap;
   overflow: hidden;
@@ -229,7 +248,7 @@ function posClass(pos) {
 }
 
 .driver-name strong {
-  font-weight: 700;
+  font-weight: 300;
 }
 
 .driver-meta {
@@ -253,8 +272,8 @@ function posClass(pos) {
 
 /* ── Statistik-Werte ────────────────────────────── */
 .stat-value {
-  font-size: 0.9rem;
-  font-weight: 500;
+  font-size: 1.1rem;
+  font-weight: 600;
   color: var(--color-text);
 }
 
@@ -272,7 +291,8 @@ function posClass(pos) {
   font-family: var(--font-display);
   font-style: italic;
   font-weight: 900;
-  font-size: 1.35rem;
+  font-size: 1.6rem;
+  letter-spacing: 2px;
   color: var(--color-gold);
   line-height: 1;
 }

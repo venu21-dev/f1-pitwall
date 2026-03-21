@@ -105,6 +105,7 @@ async function retry() {
           :key="year"
           class="year-btn"
           :class="{ 'year-btn--active': year === selectedYear }"
+          :aria-pressed="year === selectedYear"
           @click="selectYear(year)"
         >
           {{ year }}
@@ -144,6 +145,31 @@ async function retry() {
 </template>
 
 <style scoped>
+/* ── Animationen ──────────────────────────────────── */
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.drivers__header {
+  animation: fadeInDown 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.drivers__body {
+  animation: fadeIn 0.3s ease 0.1s both;
+}
+
 .drivers {
   display: flex;
   flex-direction: column;
@@ -167,7 +193,7 @@ async function retry() {
   text-transform: uppercase;
   line-height: 0.95;
   color: #fff;
-  letter-spacing: -0.01em;
+  letter-spacing: calc(-0.01em + 2px);
 }
 
 /* ── Jahres-Filter ───────────────────────────────── */
@@ -179,14 +205,15 @@ async function retry() {
 }
 
 .year-btn {
-  padding: 0.35rem 0.85rem;
+  padding: 0.3rem 0.75rem;
   border-radius: 999px;
   border: 1px solid var(--color-border);
-  background: var(--color-surface-raised);
+  background: #202730;
   color: var(--color-text-muted);
-  font-size: 0.8rem;
-  font-weight: 600;
-  transition: background var(--transition), color var(--transition), border-color var(--transition);
+  font-family: var(--font-nav);
+  font-size: 0.78rem;
+  font-weight: 700;
+  transition: background var(--transition), color var(--transition), border-color var(--transition), box-shadow var(--transition);
   white-space: nowrap;
 }
 
@@ -196,9 +223,10 @@ async function retry() {
 }
 
 .year-btn--active {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
+  background: linear-gradient(to right, #FF3624, #E10500);
+  border-color: transparent;
   color: #fff;
+  box-shadow: 0 0 10px rgba(225, 5, 0, 0.4);
 }
 
 /* ── Tabellen-Card ───────────────────────────────── */

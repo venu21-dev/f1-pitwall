@@ -54,7 +54,17 @@ const chartData = computed(() => ({
 const chartOptions = {
   responsive: true,
   maintainAspectRatio: false,
-  animation: { duration: 400 },
+  animation: {
+    duration: 1100,
+    easing: 'easeOutQuart',
+    y: {
+      from: (ctx) => {
+        if (ctx.type === 'data' && ctx.mode === 'default') {
+          return ctx.chart.scales.y.getPixelForValue(0)
+        }
+      },
+    },
+  },
   plugins: {
     legend: {
       position: 'bottom',

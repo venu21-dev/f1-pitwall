@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { getTeamColor } from '@/utils/teamColors'
 
 const props = defineProps({
@@ -11,16 +11,26 @@ const props = defineProps({
   standings: { type: Array, default: () => [] },
   /** 'A' | 'B' – wird beim select-Event durchgegeben */
   side: { type: String, required: true },
+  /** Welche Seite aktuell offen ist (von CompareView gesteuert) */
+  openSide: { type: String, default: null },
 })
 
-const emit = defineEmits(['select'])
+const emit = defineEmits(['select', 'opened'])
 
 // ── Dropdown-State ──────────────────────────────────────────────────────────
 const isOpen   = ref(false)
 const panelRef = ref(null)
 
-function toggle() { isOpen.value = !isOpen.value }
+function toggle() {
+  isOpen.value = !isOpen.value
+  if (isOpen.value) emit('opened', props.side)
+}
 function close()  { isOpen.value = false }
+
+// Schliesst dieses Panel wenn die andere Seite geöffnet wird
+watch(() => props.openSide, (side) => {
+  if (side && side !== props.side) close()
+})
 
 function select(driverId) {
   emit('select', { side: props.side, driverId })
@@ -103,7 +113,7 @@ const driverName = computed(() =>
   display: flex;
   align-items: center;
   gap: 0.85rem;
-  background: var(--color-surface);
+  background: linear-gradient(to bottom, #262D36 0%, #202630 50%, #1D232D 100%);
   border: 1px solid var(--color-border);
   border-radius: 14px;
   padding: 1.1rem 1rem 1.1rem 1.1rem;
@@ -144,7 +154,7 @@ const driverName = computed(() =>
   text-transform: uppercase;
   color: #fff;
   line-height: 1;
-  letter-spacing: -0.01em;
+  letter-spacing: calc(-0.01em + 2px);
   margin: 0;
   white-space: nowrap;
   overflow: hidden;
@@ -188,7 +198,7 @@ const driverName = computed(() =>
   top: calc(100% + 6px);
   left: 0;
   right: 0;
-  z-index: 100;
+  z-index: 500;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 12px;

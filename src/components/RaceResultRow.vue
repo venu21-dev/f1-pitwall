@@ -81,19 +81,23 @@ const badgeText = computed(() => (isDNF.value ? 'DNF' : positionText.value))
 /* ── Zeilen-Grid ──────────────────────────────────── */
 .rr-row {
   display: grid;
-  grid-template-columns: 52px 1fr 64px 80px 72px;
+  grid-template-columns: 52px 1fr 160px 170px 110px;
   align-items: center;
   padding: 0.7rem 1.5rem;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: none;
   transition: background var(--transition);
 }
 
-.rr-row:last-child {
-  border-bottom: none;
+.rr-row:nth-child(odd) {
+  background: #20252F;
+}
+
+.rr-row:nth-child(even) {
+  background: #1D222D;
 }
 
 .rr-row:hover {
-  background: rgba(255, 255, 255, 0.025);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .rr-row--dnf {
@@ -133,8 +137,8 @@ const badgeText = computed(() => (isDNF.value ? 'DNF' : positionText.value))
 
 /* ── Startplatz ──────────────────────────────────── */
 .rr-grid {
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: 1.1rem;
+  font-weight: 600;
   color: var(--color-text-muted);
   text-align: center;
 }
@@ -149,10 +153,10 @@ const badgeText = computed(() => (isDNF.value ? 'DNF' : positionText.value))
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 36px;
-  padding: 0.2rem 0.5rem;
+  min-width: 42px;
+  padding: 0.25rem 0.6rem;
   border-radius: 6px;
-  font-size: 0.78rem;
+  font-size: 1rem;
   font-weight: 700;
   letter-spacing: 0.04em;
 }
@@ -165,17 +169,16 @@ const badgeText = computed(() => (isDNF.value ? 'DNF' : positionText.value))
 
 /* ── Punkte ──────────────────────────────────────── */
 .rr-pts {
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 800;
+  font-size: 1.2rem;
+  letter-spacing: 2px;
   color: var(--color-text-muted);
   text-align: right;
 }
 
 .rr-pts--gold {
-  font-family: var(--font-display);
-  font-style: italic;
-  font-weight: 800;
-  font-size: 1rem;
   color: var(--color-gold);
 }
 

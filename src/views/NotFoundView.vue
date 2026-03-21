@@ -49,7 +49,7 @@ const router = useRouter()
   pointer-events: none;
   user-select: none;
   line-height: 1;
-  letter-spacing: -0.04em;
+  letter-spacing: calc(-0.04em + 2px);
 }
 
 /* ── Inhalt ───────────────────────────────────────── */
@@ -70,7 +70,7 @@ const router = useRouter()
   text-transform: uppercase;
   color: #fff;
   line-height: 1;
-  letter-spacing: -0.01em;
+  letter-spacing: calc(-0.01em + 2px);
 }
 
 .nf__sub {

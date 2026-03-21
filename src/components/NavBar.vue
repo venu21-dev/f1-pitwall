@@ -47,6 +47,7 @@ function isActive(path) {
           :to="link.to"
           class="navbar__link"
           :class="{ 'navbar__link--active': isActive(link.to) }"
+          :aria-current="isActive(link.to) ? 'page' : undefined"
         >
           {{ link.name }}
         </RouterLink>
@@ -78,6 +79,7 @@ function isActive(path) {
           :to="link.to"
           class="navbar__mobile-link"
           :class="{ 'navbar__mobile-link--active': isActive(link.to) }"
+          :aria-current="isActive(link.to) ? 'page' : undefined"
           @click="closeMenu"
         >
           {{ link.name }}
@@ -94,12 +96,13 @@ function isActive(path) {
   top: 0;
   left: 0;
   right: 0;
-  z-index: 100;
+  z-index: 1000;
   padding: 24px 1.5rem;
 }
 
 /* ── Pill container ──────────────────────────────────── */
 .navbar__pill {
+  position: relative;
   width: fit-content;
   margin: 0 auto;
   height: 56px;
@@ -107,11 +110,26 @@ function isActive(path) {
   align-items: center;
   gap: 0.5rem;
   padding: 0 0.75rem 0 1rem;
-  background: rgba(18, 18, 28, 0.88);
-  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: linear-gradient(to left, rgba(20, 26, 38, 0.45), rgba(16, 20, 30, 0.65));
+  border: none;
   border-radius: 999px;
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+/* Gradient-Umrandung via Pseudo-Element */
+.navbar__pill::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  padding: 1px;
+  background: linear-gradient(to left, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.04));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
 }
 
 /* ── Logo ────────────────────────────────────────────── */
@@ -145,8 +163,9 @@ function isActive(path) {
 .navbar__link {
   padding: 0.4rem 0.55rem;
   border-radius: 999px;
+  font-family: var(--font-nav);
   font-size: 0.95rem;
-  font-weight: 500;
+  font-weight: 700;
   color: var(--color-text-muted);
   transition: color var(--transition);
 }
@@ -158,6 +177,10 @@ function isActive(path) {
 .navbar__link--active {
   color: #ffffff;
   font-weight: 700;
+}
+
+.navbar__link:focus-visible {
+  outline: none;
 }
 
 /* ── Logo/links separator ────────────────────────────── */

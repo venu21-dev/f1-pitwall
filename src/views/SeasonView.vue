@@ -127,6 +127,7 @@ async function retry() {
           :key="y"
           class="year-btn"
           :class="{ 'year-btn--active': String(y) === String(year) }"
+          :aria-pressed="String(y) === String(year)"
           @click="selectYear(y)"
         >
           {{ y }}
@@ -152,12 +153,17 @@ async function retry() {
 
     <!-- ── Rennen-Grid ───────────────────────────────────── -->
     <div v-else class="races-grid">
-      <RaceCard
-        v-for="race in activeRaces"
+      <div
+        v-for="(race, i) in activeRaces"
         :key="race.round"
-        :race="race"
-        :winner="activeWinners[race.round] ?? null"
-      />
+        class="race-card-wrap"
+        :style="{ animationDelay: `${i * 0.05}s` }"
+      >
+        <RaceCard
+          :race="race"
+          :winner="activeWinners[race.round] ?? null"
+        />
+      </div>
     </div>
 
   </div>
@@ -168,6 +174,25 @@ async function retry() {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+}
+
+/* ── Animationen ─────────────────────────────────── */
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.season__header {
+  animation: fadeInDown 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.race-card-wrap {
+  animation: fadeInUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 /* ── Header ──────────────────────────────────────── */
@@ -193,7 +218,7 @@ async function retry() {
   text-transform: uppercase;
   line-height: 0.95;
   color: #fff;
-  letter-spacing: -0.01em;
+  letter-spacing: calc(-0.01em + 2px);
 }
 
 .season__meta {
@@ -211,14 +236,15 @@ async function retry() {
 }
 
 .year-btn {
-  padding: 0.35rem 0.85rem;
+  padding: 0.3rem 0.75rem;
   border-radius: 999px;
   border: 1px solid var(--color-border);
-  background: var(--color-surface-raised);
+  background: #202730;
   color: var(--color-text-muted);
-  font-size: 0.8rem;
-  font-weight: 600;
-  transition: background var(--transition), color var(--transition), border-color var(--transition);
+  font-family: var(--font-nav);
+  font-size: 0.78rem;
+  font-weight: 700;
+  transition: background var(--transition), color var(--transition), border-color var(--transition), box-shadow var(--transition);
   white-space: nowrap;
   cursor: pointer;
 }
@@ -229,9 +255,10 @@ async function retry() {
 }
 
 .year-btn--active {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
+  background: linear-gradient(to right, #FF3624, #E10500);
+  border-color: transparent;
   color: #fff;
+  box-shadow: 0 0 10px rgba(225, 5, 0, 0.4);
 }
 
 /* ── Rennen-Grid ─────────────────────────────────── */

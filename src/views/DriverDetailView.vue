@@ -148,8 +148,11 @@ async function retry() {
     <template v-else>
 
       <!-- Zurück-Button -->
-      <button class="back-btn" @click="router.push({ name: 'drivers' })">
-        ← Fahrerwertung
+      <button class="back-btn" aria-label="Zurück zur Fahrerwertung" @click="router.push({ name: 'drivers' })">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="back-btn__icon">
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
+        Fahrerwertung
       </button>
 
       <!-- ── Fahrername + Team ──────────────────────────── -->
@@ -168,23 +171,23 @@ async function retry() {
 
       <!-- ── Stat-Kacheln ────────────────────────────────── -->
       <section class="stats-row">
-        <div class="stat-card">
+        <div class="stat-card" style="animation-delay: 0.2s">
           <span class="stat-card__value">{{ stats.points }}</span>
           <span class="stat-card__label">PUNKTE</span>
         </div>
-        <div class="stat-card">
+        <div class="stat-card" style="animation-delay: 0.28s">
           <span class="stat-card__value">{{ stats.wins }}</span>
           <span class="stat-card__label">SIEGE</span>
         </div>
-        <div class="stat-card">
+        <div class="stat-card" style="animation-delay: 0.36s">
           <span class="stat-card__value">{{ stats.poles }}</span>
           <span class="stat-card__label">POLES</span>
         </div>
-        <div class="stat-card">
+        <div class="stat-card" style="animation-delay: 0.44s">
           <span class="stat-card__value">{{ stats.podiums }}</span>
           <span class="stat-card__label">PODIUM</span>
         </div>
-        <div class="stat-card">
+        <div class="stat-card" style="animation-delay: 0.52s">
           <span class="stat-card__value stat-card__value--dnf">{{ stats.dnfs }}</span>
           <span class="stat-card__label">DNF</span>
         </div>
@@ -202,6 +205,7 @@ async function retry() {
               :key="year"
               class="year-btn"
               :class="{ 'year-btn--active': year === selectedYear }"
+              :aria-pressed="year === selectedYear"
               @click="loadYear(year)"
             >
               {{ year }}
@@ -253,18 +257,24 @@ async function retry() {
   display: inline-flex;
   align-items: center;
   align-self: flex-start;
-  gap: 0.35rem;
-  padding: 0.4rem 1rem;
+  gap: 0.4rem;
+  padding: 0.5rem 1.1rem;
   border-radius: 999px;
   border: 1px solid var(--color-border);
   background: var(--color-surface-raised);
   color: var(--color-text-muted);
-  font-size: 0.78rem;
+  font-size: 0.88rem;
   font-weight: 600;
   cursor: pointer;
   transition: color var(--transition), border-color var(--transition);
 }
 .back-btn:hover { color: var(--color-text); border-color: var(--color-text-subtle); }
+
+.back-btn__icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
 
 /* ── Driver Header ───────────────────────────────────── */
 .driver-header {
@@ -303,7 +313,7 @@ async function retry() {
   text-transform: uppercase;
   line-height: 0.9;
   color: #fff;
-  letter-spacing: -0.01em;
+  letter-spacing: calc(-0.01em + 2px);
 }
 
 /* ── Stat-Kacheln ────────────────────────────────────── */
@@ -314,12 +324,13 @@ async function retry() {
 }
 
 .stat-card {
-  background: var(--color-surface);
+  background: linear-gradient(to bottom, #262D36 0%, #202630 50%, #1D232D 100%);
   border: 1px solid var(--color-border);
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 1.25rem 1rem 1rem;
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 0.4rem;
 }
 
@@ -329,6 +340,7 @@ async function retry() {
   font-weight: 900;
   font-size: clamp(2rem, 4vw, 2.8rem);
   line-height: 1;
+  letter-spacing: 2px;
   color: var(--color-gold);
 }
 .stat-card__value--dnf { color: var(--color-primary); }
@@ -339,6 +351,7 @@ async function retry() {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--color-text-muted);
+  text-align: center;
 }
 
 /* ── Rennergebnisse ──────────────────────────────────── */
@@ -358,7 +371,7 @@ async function retry() {
   font-size: 1.5rem;
   text-transform: uppercase;
   color: #fff;
-  letter-spacing: 0.02em;
+  letter-spacing: calc(0.02em + 2px);
 }
 
 /* Jahres-Filter (inline, rechts neben Titel) */
@@ -369,29 +382,31 @@ async function retry() {
 }
 
 .year-btn {
-  padding: 0.28rem 0.7rem;
+  padding: 0.3rem 0.75rem;
   border-radius: 999px;
   border: 1px solid var(--color-border);
-  background: var(--color-surface-raised);
+  background: #202730;
   color: var(--color-text-muted);
-  font-size: 0.75rem;
-  font-weight: 600;
-  transition: background var(--transition), color var(--transition), border-color var(--transition);
+  font-family: var(--font-nav);
+  font-size: 0.78rem;
+  font-weight: 700;
+  transition: background var(--transition), color var(--transition), border-color var(--transition), box-shadow var(--transition);
 }
 .year-btn:hover { color: var(--color-text); border-color: var(--color-text-subtle); }
 .year-btn--active {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
+  background: linear-gradient(to right, #FF3624, #E10500);
+  border-color: transparent;
   color: #fff;
+  box-shadow: 0 0 10px rgba(225, 5, 0, 0.4);
 }
 
 /* Tabellenkopf */
 .results-head {
   display: grid;
-  grid-template-columns: 52px 1fr 64px 80px 72px;
+  grid-template-columns: 52px 1fr 160px 170px 110px;
   padding: 0.65rem 1.5rem;
   margin-top: 0.75rem;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid #20252F;
   font-size: 0.6rem;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -437,6 +452,33 @@ async function retry() {
   border: 1px solid var(--color-border);
 }
 .btn--ghost:hover { color: var(--color-text); }
+
+/* ── Animationen ─────────────────────────────────────── */
+@keyframes fadeInLeft {
+  from { opacity: 0; transform: translateX(-24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.back-btn {
+  animation: fadeInLeft 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.driver-header {
+  animation: fadeInLeft 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.08s both;
+}
+
+.stat-card {
+  animation: fadeInUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.results-section {
+  animation: fadeInUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.55s both;
+}
 
 /* ── Responsive ──────────────────────────────────────── */
 @media (max-width: 700px) {

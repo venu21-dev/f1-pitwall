@@ -8,10 +8,10 @@ defineEmits(['retry'])
 </script>
 
 <template>
-  <div class="error-wrap">
-    <div class="error-icon">!</div>
+  <div class="error-wrap" role="alert" aria-live="assertive">
+    <div class="error-icon" aria-hidden="true">!</div>
     <p class="error-text">{{ message }}</p>
-    <button class="error-btn" @click="$emit('retry')">
+    <button class="error-btn" @click="$emit('retry')" :aria-label="retryLabel">
       {{ retryLabel }}
     </button>
   </div>

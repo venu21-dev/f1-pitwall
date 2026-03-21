@@ -92,7 +92,7 @@ const metrics = computed(() => {
 /** Balkenbreite in % (0–100), als Anteil am Total beider Werte */
 function barWidth(val, valA, valB) {
   const total = Number(valA) + Number(valB)
-  if (total === 0) return 50
+  if (total === 0) return 0
   return Math.round((Number(val) / total) * 100)
 }
 </script>
